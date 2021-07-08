@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -37,6 +38,11 @@ public class TasksController {
 	@PutMapping("/tasks/{id}")
 	public ResponseEntity<?> updateTasks(@PathVariable Integer id, @RequestBody Tasks task) {
 		return tasksService.updateTasks(id, task);
+	}
+	
+	@PatchMapping("/tasks/{id}")
+	public ResponseEntity<?> patchTasks(@PathVariable Integer id, @RequestBody Tasks task){
+		return tasksService.patchTasks(id, task);
 	}
 	
 	@DeleteMapping("/tasks/{id}")

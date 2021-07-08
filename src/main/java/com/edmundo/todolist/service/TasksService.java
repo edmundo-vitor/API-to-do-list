@@ -1,7 +1,6 @@
 package com.edmundo.todolist.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.edmundo.todolist.dto.MessageDTO;
 import com.edmundo.todolist.model.Tasks;
 import com.edmundo.todolist.repository.TasksRepository;
+import com.edmundo.todolist.util.PatchUtil;
 
 @Service
 public class TasksService {
@@ -38,28 +38,45 @@ public class TasksService {
 	}
 	
 	public ResponseEntity<?> updateTasks(Integer id, Tasks updateTask) {
-		boolean change = false;
-		
-		Optional<Tasks> optionalTask = tasksRepo.findById(id);
-		Tasks task = optionalTask.get();
+		Tasks task = tasksRepo.findById(id).get();
+
 		
 		//Update data
-		if(updateTask.getTitle() != null && !updateTask.getTitle().isEmpty()) {
-			task.setTitle(updateTask.getTitle());
-			change = true;
-		}
-		if(updateTask.getDescription() != null && !updateTask.getDescription().isEmpty()) {
-			task.setDescription(updateTask.getDescription());
-			change = true;
+		if(task != null && updateTask != null) {
+			updateTask.setId(id);
+			
+			try {
+				Tasks response = tasksRepo.save(updateTask);
+				return ResponseEntity.ok(response);
+			} catch (Exception e) {
+				MessageDTO message = new MessageDTO(e.getMessage());
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(message);
+			}	
+			
+		}else {
+			MessageDTO message = new MessageDTO("Informe valores válidos/não nulos.");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
 		}
 		
-		//check if there was any change in the task
-		if(change) {
-			Tasks response = tasksRepo.save(task);
-			return ResponseEntity.status(HttpStatus.OK).body(response);
+	}
+	
+	public ResponseEntity<?> patchTasks(Integer id, Tasks updateTask) {
+		Tasks task = tasksRepo.findById(id).get();
+		
+		if(task != null) {
+			PatchUtil.updateIfNotNull(task::setTitle, updateTask.getTitle());
+			PatchUtil.updateIfNotNull(task::setDescription, updateTask.getDescription());
+			
+			try {
+				Tasks response = tasksRepo.save(task);
+				return ResponseEntity.status(HttpStatus.OK).body(response);
+			} catch (Exception e) {
+				MessageDTO message = new MessageDTO(e.getMessage());
+				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(message);
+			}
 		}else {
-			MessageDTO error = new MessageDTO("Nenhum dado encontrado na tarefa");
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+			MessageDTO message = new MessageDTO("Essa task não existe.");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
 		}
 		
 	}
